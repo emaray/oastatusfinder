@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import messagebox
+import threading
 
 window = Tk() 
  
@@ -34,6 +35,8 @@ jTOCstxt2 = Entry(window,width=50,highlightcolor="orange",highlightthickness=1,r
 
 jTOCslbl3 = Label(window, text="Enter the name of the faculty publications file.\n (Don't include the file extension.)", bg="white")
 jTOCstxt3 = Entry(window,width=50,highlightcolor="orange",highlightthickness=1,relief="flat")
+
+jTOCSlbl4 = Label(window, text="Next step: Manually search for ISSNs and/or eISSNs for titles in ambiguousTitles.csv. \n\n See workflow for details.", bg="white")
 
 srlbl1 = Label(window, text="Enter the name of the project folder \n",bg='white')
 srtxt1 = Entry(window,width=50,highlightcolor="orange",highlightthickness=1,relief="flat") 
@@ -204,6 +207,7 @@ def returnMenu():
 	jTOCstxt1.grid_remove()
 	jTOCstxt2.grid_remove()
 	jTOCstxt3.grid_remove()
+	jTOCSlbl4.grid_remove()
 	blank1.grid_remove()
 	blank2.grid_remove()
 	blank3.grid_remove()
@@ -287,12 +291,16 @@ lfButton.bind("<Return>",cleanPubList)
 
 def getInputsLF():
 	import listFormatter as lf
-	publicationsList = lftxt1.get()
-	lf.listFormatter(publicationsList)
+	def listFormatterThread():
+		publicationsList = lftxt1.get()
+		lf.listFormatter(publicationsList)
+		submitButtonLF.grid_remove()
+		# returnButton = Button(window, text="Return to menu", command=returnMenu)
+		returnButtonLF.grid(column=0, row=10,columnspan=3)
+	t = threading.Thread(target=listFormatterThread)
+	t.start()	
 
-	submitButtonLF.grid_remove()
-	# returnButton = Button(window, text="Return to menu", command=returnMenu)
-	returnButtonLF.grid(column=0, row=10,columnspan=3)
+
 
 submitButtonLF = Button(window, text="Submit", command=getInputsLF)
 
@@ -331,14 +339,31 @@ part1Button.grid(column=1, row=6,sticky=W)
 part1Button.bind("<Return>",part1)
 
 def getInputs(event=None):
-	import jTOCsGUI as jTOCs
-	jtocsUser = jTOCstxt1.get()
-	folderName = jTOCstxt2.get()
-	publicationFile = jTOCstxt3.get()
-	jTOCs.createQuery(jtocsUser,folderName,publicationFile)
-	submitButton.grid_remove()
+	def getInputsThread():
+		import jTOCsGUI as jTOCs
+		jtocsUser = jTOCstxt1.get()
+		folderName = jTOCstxt2.get()
+		publicationFile = jTOCstxt3.get()
+		jTOCs.createQuery(jtocsUser,folderName,publicationFile)
+		part1Label.grid_remove()
+		jTOCslbl1.grid_remove()
+		jTOCslbl2.grid_remove()
+		jTOCslbl3.grid_remove()
+		jTOCstxt1.grid_remove()
+		jTOCstxt2.grid_remove()
+		jTOCstxt3.grid_remove()
+		blank1.grid_remove()
+		# blank2.grid_remove()
+		# blank3.grid_remove()
 
-	returnButton.grid(column=0, row=10,columnspan=3)
+		jTOCSlbl4.grid(column=0, row=5,columnspan=3)
+		submitButton.grid_remove()
+		returnButton.grid(column=0, row=10,columnspan=3)
+
+	t = threading.Thread(target=getInputsThread)
+	t.start()	
+
+
 submitButton = Button(window, text="Submit", command=getInputs)
 
 def goBack():
@@ -349,9 +374,6 @@ def goBack():
 	jTOCstxt1.grid_remove()
 	jTOCstxt2.grid_remove()
 	jTOCstxt3.grid_remove()
-	blank1.grid_remove()
-	blank2.grid_remove()
-	blank3.grid_remove()
 	returnButton.grid_remove()
 	backButton.grid_remove()
 	submitButton.grid_remove()
@@ -381,12 +403,17 @@ part2Button.bind("<Return>",part2)
 
 def getInputs2(event=None):
 	import sherpaRomeoGUI as sr
-	folderName = srtxt1.get()
-	sherpaRomeoAK = srtxt2.get()
-	sr.sherpaRomeo(folderName, sherpaRomeoAK)
+	def getInputs2Thread():
+		folderName = srtxt1.get()
+		sherpaRomeoAK = srtxt2.get()
+		sr.sherpaRomeo(folderName, sherpaRomeoAK)
 
-	submitButton2.grid_remove()
-	returnButton2.grid(column=0, row=8,columnspan=3)
+		submitButton2.grid_remove()
+		returnButton2.grid(column=0, row=8,columnspan=3)
+	t = threading.Thread(target=getInputs2Thread)
+	t.start()
+
+
 
 submitButton2 = Button(window, text="Submit", command=getInputs2)
 
@@ -436,12 +463,18 @@ blank3.grid(column=0, row=11)
 
 def getInputs3(event=None):
 	import assignLibrarianGUI as al
-	folderName = altxt1.get()
-	haveList = altxt2.get()
-	al.consultingAreasList(folderName, haveList,window)
+	def getInputs3Threaded():
+		folderName = altxt1.get()
+		haveList = altxt2.get()
+		al.consultingAreasList(folderName, haveList,window)
 
-	submitButton3.grid_remove()
-	returnButton3.grid(column=0, row=8,columnspan=3)
+		submitButton3.grid_remove()
+		returnButton3.grid(column=0, row=8,columnspan=3)
+	
+	t = threading.Thread(target=getInputs3Thread)
+	t.start()
+
+
 
 submitButton3 = Button(window, text="Submit", command=getInputs3)
 
