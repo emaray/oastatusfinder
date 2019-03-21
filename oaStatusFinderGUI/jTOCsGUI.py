@@ -90,10 +90,10 @@ def createQuery(jtocsUser,folderName,publicationFile):
                 # editedArticleTitle = unidecode.unidecode(articleTitle)
                 
                 ##writes these titles to a simplified publications list before removing spaces and punctuation to form queries
-                simpleWriter.writerow({'pubID':pubID,'firstName':editedFirstName,'lastName':editedLastName,'department':department,'category':category,'activityScope':activityScope,'journalTitle':editedTitle,'month':month,'issueNumber':issueNumber,'pages':pages,'articleTitle':editedArticleTitle,'volume':volume,'year':year})
+                simpleWriter.writerow({'pubID':pubID,'firstName':firstName,'lastName':lastName,'department':department,'category':category,'activityScope':activityScope,'journalTitle':journalTitle,'month':month,'issueNumber':issueNumber,'pages':pages,'articleTitle':articleTitle,'volume':volume,'year':year})
                 
                 ##substitutes '' for non-alphanumeric characters in all Titles
-                editedTitle = re.sub('[^\s\w]', '', editedTitle)
+                editedTitle = re.sub('[^\s\w]', '', journalTitle)
 
                 ##replaces spaces, ampersands, and dashes with plus signs; replaces commas and colons with nothing; removes double plusses
                 editedTitle = editedTitle.replace(' ','+').replace('-','+').replace('++','+').replace('\n','\r')

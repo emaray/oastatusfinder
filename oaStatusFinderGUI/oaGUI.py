@@ -286,8 +286,9 @@ lfButton.grid(column=1, row=5,sticky=W)
 lfButton.bind("<Return>",cleanPubList)
 
 def getInputsLF():
+	import listFormatter as lf
 	publicationsList = lftxt1.get()
-	# lf.listFormatter(publicationsList)
+	lf.listFormatter(publicationsList)
 
 	submitButtonLF.grid_remove()
 	# returnButton = Button(window, text="Return to menu", command=returnMenu)
@@ -330,6 +331,7 @@ part1Button.grid(column=1, row=6,sticky=W)
 part1Button.bind("<Return>",part1)
 
 def getInputs(event=None):
+	import jTOCsGUI as jTOCs
 	jtocsUser = jTOCstxt1.get()
 	folderName = jTOCstxt2.get()
 	publicationFile = jTOCstxt3.get()
@@ -378,6 +380,7 @@ part2Button.grid(column=1, row = 7, sticky=W)
 part2Button.bind("<Return>",part2)
 
 def getInputs2(event=None):
+	import sherpaRomeoGUI as sr
 	folderName = srtxt1.get()
 	sherpaRomeoAK = srtxt2.get()
 	sr.sherpaRomeo(folderName, sherpaRomeoAK)
@@ -432,6 +435,7 @@ blank3 = Label(window,text='',bg='white')
 blank3.grid(column=0, row=11)
 
 def getInputs3(event=None):
+	import assignLibrarianGUI as al
 	folderName = altxt1.get()
 	haveList = altxt2.get()
 	al.consultingAreasList(folderName, haveList,window)

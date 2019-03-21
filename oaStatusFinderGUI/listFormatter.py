@@ -36,11 +36,11 @@ def listFormatter(publicationsList):
 				if "Article" in category:
 					if "Journal: Academic" in activityScope:
 						publicationID = publicationID + 1
-						cleanWriter.writerow({'publicationID':publicationID,'firstName':firstName,'lastName':lastName,'department':department,'category':category,'activityScope':activityScope,'journalTitle':journalTitle,'month':month,'issueNumber':issueNumber,'pages':pages,'articleTitle':articleTitle,'volume':volume,'year':year})
+						cleanWriter.writerow({'publicationID':publicationID,'firstName':editedFirstName,'lastName':editedLastName,'department':department,'category':category,'activityScope':activityScope,'journalTitle':editedTitle,'month':month,'issueNumber':issueNumber,'pages':pages,'articleTitle':editedArticleTitle,'volume':volume,'year':year})
 						
 					elif "Creative Writing" in activityScope:
 						publicationID = publicationID + 1
-						cleanWriter.writerow({'publicationID':publicationID,'firstName':firstName,'lastName':lastName,'department':department,'category':category,'activityScope':activityScope,'journalTitle':journalTitle,'month':month,'issueNumber':issueNumber,'pages':pages,'articleTitle':articleTitle,'volume':volume,'year':year})
+						cleanWriter.writerow({'publicationID':publicationID,'firstName':editedFirstName,'lastName':editedLastName,'department':department,'category':category,'activityScope':activityScope,'journalTitle':editedTitle,'month':month,'issueNumber':issueNumber,'pages':pages,'articleTitle':editedArticleTitle,'volume':volume,'year':year})
 					
 					else:
 						pass

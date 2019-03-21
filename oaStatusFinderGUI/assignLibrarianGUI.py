@@ -40,7 +40,7 @@ print()
 def consultingAreasList(folderName,haveList,window):
 	# folderName = input('Enter the project folder name:')
 	cwd = os.getcwd()
-	path = '%s/%s' %(cwd,folderName)
+	path = '%s' %(cwd)
 	os.chdir(path)
 	
 	# haveList = input("Do you already have a .csv file of consulting areas by librarian? Answer 'yes' or 'no':")

@@ -61,111 +61,237 @@ def sherpaRomeo(folderName,sherpaRomeoAK):
 	lastPart2 = '&ak=' + sherpaRomeoAK
 
 	cwd = os.getcwd()
-	path = '%s/%s' %(cwd,folderName)
+	path = '%s' %(cwd)
 	os.chdir(path)
 
 	##setting up some csv readers and writers
-	journalData = open('journalData.csv','r',newline = '')
-	csv_reader = csv.DictReader(journalData,delimiter=',')
+	with open('journalData.csv','r',newline = '') as journalData:
+		csv_reader = csv.DictReader(journalData,delimiter=',')
 
-	disambiguatedTitles = open('disambiguatedTitles.csv','r',newline='')
-	disambiguated_reader = csv.DictReader(disambiguatedTitles,delimiter=',')
-	failedQueries = open('failedQueries.csv','r',newline = '')
+		disambiguatedTitles = open('disambiguatedTitles.csv','r',newline='')
+		disambiguated_reader = csv.DictReader(disambiguatedTitles,delimiter=',')
+		failedQueries = open('failedQueries.csv','r',newline = '')
 
-	retry_reader = csv.DictReader(failedQueries,delimiter=',')
-	fieldnames = ['pubID','title']
+		retry_reader = csv.DictReader(failedQueries,delimiter=',')
+		fieldnames = ['pubID','title']
 
-	ultimateFail = open('ultimateFail.csv','a',newline='')
-	fieldnames3 = ['pubID','title']
-	ultimateFail_writer = csv.DictWriter(ultimateFail,delimiter=',',fieldnames=fieldnames3)
-	ultimateFail_writer.writeheader()
+		ultimateFail = open('ultimateFail.csv','a',newline='')
+		fieldnames3 = ['pubID','title']
+		ultimateFail_writer = csv.DictWriter(ultimateFail,delimiter=',',fieldnames=fieldnames3)
+		ultimateFail_writer.writeheader()
 
-	##setting up some counters
-	totalTitles = 0
-	ultimateFail_count = 0
+		##setting up some counters
+		totalTitles = 0
+		ultimateFail_count = 0
 
-	##creates output file for the Sherpa Romeo data
-	with open('sherpaRomeo.csv','a',newline='') as sherpaRomeo:
-		fieldnames2 = ['pubID','issn','prearchiving','postarchiving','prerestriction','postrestriction','pdfversion','conditions','eissn','eprearchiving','epostarchiving','eprerestriction','epostrestriction','epdfversion','econditions']
-		writer = csv.DictWriter(sherpaRomeo, fieldnames=fieldnames2, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+		##creates output file for the Sherpa Romeo data
+		with open('sherpaRomeo.csv','a',newline='') as sherpaRomeo:
+			fieldnames2 = ['pubID','issn','prearchiving','postarchiving','prerestriction','postrestriction','pdfversion','conditions','eissn','eprearchiving','epostarchiving','eprerestriction','epostrestriction','epdfversion','econditions']
+			writer = csv.DictWriter(sherpaRomeo, fieldnames=fieldnames2, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-		writer.writeheader()
+			writer.writeheader()
 
-		##iterates over the journalData.csv to query Sherpa Romeo for publication rights
-		for row in csv_reader:
-			jID = row['pubID']
-			title = row['title']
-			issn = row['issn']
-			eissn = row['eissn']
+			##iterates over the journalData.csv to query Sherpa Romeo for publication rights
+			for row in csv_reader:
+				jID = row['pubID']
+				title = row['title']
+				issn = row['issn']
+				eissn = row['eissn']
 
-			##if there is an issn, uses that to make a query
-			if issn != '':
-				qstring2 = firstPart2 + issn + lastPart2
-				response = urllib.request.urlopen(qstring2,data=None,timeout=15)
-				webContent = response.read()
-				with open('%s.xml' %(jID + '_' + 'SR'), 'w') as f3:
-					f3.write(str(webContent))
-					f3.close()
-				with open('%s.xml' %(jID + '_' + 'SR'),'r') as file:
-					file = BeautifulSoup(file,features='lxml')
+				##if there is an issn, uses that to make a query
+				if issn != '':
+					qstring2 = firstPart2 + issn + lastPart2
+					response = urllib.request.urlopen(qstring2,data=None,timeout=15)
+					webContent = response.read()
+					with open('%s.xml' %(jID + '_' + 'SR'), 'w') as f3:
+						f3.write(str(webContent))
+						f3.close()
+					with open('%s.xml' %(jID + '_' + 'SR'),'r') as file:
+						file = BeautifulSoup(file,features='lxml')
+						try:
+							prearchiving = file.publisher.prearchiving.string
+						except:
+							prearchiving = ''
+						try:
+							postarchiving = file.publisher.postarchiving.string
+						except:
+							postarchiving = ''
+						try:
+							prerestriction = file.publisher.prerestriction.string
+						except:
+							prerestriction = ''
+						try:
+							postrestriction = file.publisher.postrestriction.string
+							if '<num>' in postrestriction:
+								postrestriction = re.sub('<.*?>','',postrestriction)
+							else:
+								postrestriction = postrestriction.string
+						except:
+							postrestriction = ''
+						try:
+							pdfversion = file.publisher.pdfversion.string
+						except:
+							pdfversion = ''
+						##making the conditions much more human-readable; for now, uses a workaround for encoding problems
+						try:
+							conditions = file.find_all("condition")
+							conditions = str(conditions)
+							conditions = re.sub('\[','',conditions)
+							conditions = re.sub('\]','',conditions)
+							conditions = re.sub('<.*?>','',conditions)
+							conditions = re.sub('&lt;num&gt;','',conditions)
+							conditions = re.sub('&lt;/num&gt;','',conditions)
+							conditions = re.sub('&lt;period units="month"&gt;','',conditions)
+							conditions = re.sub('&lt;/period&gt;','',conditions)
+							conditions = re.sub("(?<=rs)\W{2}","'",conditions)
+							conditions = re.sub("\W{2}(?=s)","'",conditions)
+						except:
+							conditions = ''
+				else:
+					prearchiving = ''
+					prerestriction = ''
+					postrestriction = ''
+					postarchiving = ''
+					pdfversion = ''
+					conditions = ''
+
+				##if there is an eissn, uses that to make a query
+				if eissn != '':
+					qstring3 = firstPart2 + eissn + lastPart2
+					response = urllib.request.urlopen(qstring3,data=None,timeout=15)
+					webContent = response.read()
+					with open('%s.xml' %(jID + '_' + 'SRE'), 'w') as f3:
+						f3.write(str(webContent))
+						f3.close()
+					with open('%s.xml' %(jID + '_' + 'SRE'),'r') as file:
+						file = BeautifulSoup(file,features='lxml')
+
+						try:
+							eprearchiving = file.publisher.prearchiving.string
+						except:
+							eprearchiving = ''
+						try:
+							epostarchiving = file.publisher.postarchiving.string
+						except:
+							epostarchiving = ''
+						try:
+							eprerestriction = file.publisher.prerestriction.string
+						except:
+							eprerestriction = ''
+						try:
+							epostrestriction = file.publisher.postrestriction.string
+							if '<num>' in epostrestriction:
+								epostrestriction = re.sub('<.*?>','',postrestriction)
+							else:
+								epostrestriction = postrestriction.string
+						except:
+							epostrestriction = ''
+						try:
+							epdfversion = file.publisher.pdfversion.string
+						except:
+							epdfversion = ''
+						try:
+							econditions = file.find_all("condition")
+							econditions = str(econditions)
+							econditions = re.sub('\[','',econditions)
+							econditions = re.sub('\]','',econditions)
+							econditions = re.sub('<.*?>','',econditions)
+							econditions = re.sub('&lt;num&gt;','',econditions)
+							econditions = re.sub('&lt;/num&gt;','',econditions)
+							econditions = re.sub('&lt;period units="month"&gt;','',econditions)
+							econditions = re.sub('&lt;/period&gt;','',econditions)
+							econditions = re.sub("(?<=rs)\W{2}","'",econditions)
+							econditions = re.sub("\W{2}(?=s)","'",econditions)
+						except:
+							econditions = ''
+
+				else:
+					eprearchiving = ''
+					eprerestriction = ''
+					epostrestriction = ''
+					epostarchiving = ''
+					epdfversion = ''
+					econditions = ''
+				writer.writerow({'pubID':jID,'issn':issn,'eissn':eissn,'prearchiving':prearchiving,'postarchiving':postarchiving,'prerestriction':prerestriction,'postrestriction':postrestriction,'pdfversion':pdfversion,'conditions':conditions,'eprearchiving':eprearchiving,'epostarchiving':epostarchiving,'eprerestriction':eprerestriction,'epostrestriction':epostrestriction,'epdfversion':epdfversion,'econditions':econditions})
+				totalTitles = totalTitles + 1
+
+			##iterates over the disambiguatedTitles.csv to query Sherpa Romeo for publication rights
+			for row in disambiguated_reader:
+				jID = row['pubID']
+				title = row['title']
+				issn = row['issn']
+				eissn = row['eissn']
+
+				if issn != '':
+					qstring2 = firstPart2 + issn + lastPart2
+					response = urllib.request.urlopen(qstring2,data=None,timeout=15)
+					webContent = response.read()
+					with open('%s.xml' %(jID + '_' + 'SR'), 'w') as f3:
+						f3.write(str(webContent))
+						f3.close()
+					with open('%s.xml' %(jID + '_' + 'SR'),'r') as file:
+						file = BeautifulSoup(file,features='lxml')
+						try:
+							prearchiving = file.publisher.prearchiving.string
+						except:
+							prearchiving = ''
+						try:
+							postarchiving = file.publisher.postarchiving.string
+						except:
+							postarchiving = ''
+						try:
+							prerestriction = file.publisher.prerestriction.string
+						except:
+							prerestriction = ''
+						try:
+							postrestriction = file.publisher.postrestriction.string
+							if '<num>' in postrestriction:
+								postrestriction = re.sub('<.*?>','',postrestriction)
+							else:
+								postrestriction = postrestriction.string
+						except:
+							postrestriction = ''
+						try:
+							pdfversion = file.publisher.pdfversion.string
+						except:
+							pdfversion = ''
+						try:
+							conditions = file.find_all("condition")
+							conditions = str(conditions)
+							conditions = re.sub('\[','',conditions)
+							conditions = re.sub('\]','',conditions)
+							conditions = re.sub('<.*?>','',conditions)
+							conditions = re.sub('&lt;num&gt;','',conditions)
+							conditions = re.sub('&lt;/num&gt;','',conditions)
+							conditions = re.sub('&lt;period units="month"&gt;','',conditions)
+							conditions = re.sub('&lt;/period&gt;','',conditions)
+							conditions = re.sub("(?<=rs)\W{2}","'",conditions)
+							conditions = re.sub("\W{2}(?=s)","'",conditions)
+						except:
+							conditions = ''
+				else:
+					prearchiving = ''
+					prerestriction = ''
+					postrestriction = ''
+					postarchiving = ''
+					pdfversion = ''
+					conditions = ''
+
+
+				if eissn != '':
+					qstring3 = firstPart2 + eissn + lastPart2
+					response = urllib.request.urlopen(qstring3,data=None,timeout=15)
+					webContent = response.read()
+					# with open('%s.xml' %(jID + '_' + 'SRE'),'w') as f3:
+					# 	f3.write(str(webContent))
+					# 	f3.close()
+					# file = BeautifulSoup(open('%s.xml' %(jID + '_' + 'SRE'), 'r'))
 					try:
-						prearchiving = file.publisher.prearchiving.string
-					except:
-						prearchiving = ''
-					try:
-						postarchiving = file.publisher.postarchiving.string
-					except:
-						postarchiving = ''
-					try:
-						prerestriction = file.publisher.prerestriction.string
-					except:
-						prerestriction = ''
-					try:
-						postrestriction = file.publisher.postrestriction.string
-						if '<num>' in postrestriction:
-							postrestriction = re.sub('<.*?>','',postrestriction)
-						else:
-							postrestriction = postrestriction.string
-					except:
-						postrestriction = ''
-					try:
-						pdfversion = file.publisher.pdfversion.string
-					except:
-						pdfversion = ''
-					##making the conditions much more human-readable; for now, uses a workaround for encoding problems
-					try:
-						conditions = file.find_all("condition")
-						conditions = str(conditions)
-						conditions = re.sub('\[','',conditions)
-						conditions = re.sub('\]','',conditions)
-						conditions = re.sub('<.*?>','',conditions)
-						conditions = re.sub('&lt;num&gt;','',conditions)
-						conditions = re.sub('&lt;/num&gt;','',conditions)
-						conditions = re.sub('&lt;period units="month"&gt;','',conditions)
-						conditions = re.sub('&lt;/period&gt;','',conditions)
-						conditions = re.sub("(?<=rs)\W{2}","'",conditions)
-						conditions = re.sub("\W{2}(?=s)","'",conditions)
-					except:
-						conditions = ''
-			else:
-				prearchiving = ''
-				prerestriction = ''
-				postrestriction = ''
-				postarchiving = ''
-				pdfversion = ''
-				conditions = ''
-
-			##if there is an eissn, uses that to make a query
-			if eissn != '':
-				qstring3 = firstPart2 + eissn + lastPart2
-				response = urllib.request.urlopen(qstring3,data=None,timeout=15)
-				webContent = response.read()
-				with open('%s.xml' %(jID + '_' + 'SRE'), 'w') as f3:
-					f3.write(str(webContent))
-					f3.close()
-				with open('%s.xml' %(jID + '_' + 'SRE'),'r') as file:
-					file = BeautifulSoup(file,features='lxml')
-
+						f3 = open('%s.xml' %(jID + '_' + 'SRE'),'w')
+						f3.write(str(webContent))
+						f3.close()
+					except UnicodeEncodeError:
+						pass
 					try:
 						eprearchiving = file.publisher.prearchiving.string
 					except:
@@ -205,213 +331,87 @@ def sherpaRomeo(folderName,sherpaRomeoAK):
 					except:
 						econditions = ''
 
-			else:
-				eprearchiving = ''
-				eprerestriction = ''
-				epostrestriction = ''
-				epostarchiving = ''
-				epdfversion = ''
-				econditions = ''
-			writer.writerow({'pubID':jID,'issn':issn,'eissn':eissn,'prearchiving':prearchiving,'postarchiving':postarchiving,'prerestriction':prerestriction,'postrestriction':postrestriction,'pdfversion':pdfversion,'conditions':conditions,'eprearchiving':eprearchiving,'epostarchiving':epostarchiving,'eprerestriction':eprerestriction,'epostrestriction':epostrestriction,'epdfversion':epdfversion,'econditions':econditions})
-			totalTitles = totalTitles + 1
-
-		##iterates over the disambiguatedTitles.csv to query Sherpa Romeo for publication rights
-		for row in disambiguated_reader:
-			jID = row['pubID']
-			title = row['title']
-			issn = row['issn']
-			eissn = row['eissn']
-
-			if issn != '':
-				qstring2 = firstPart2 + issn + lastPart2
-				response = urllib.request.urlopen(qstring2,data=None,timeout=15)
-				webContent = response.read()
-				with open('%s.xml' %(jID + '_' + 'SR'), 'w') as f3:
-					f3.write(str(webContent))
-					f3.close()
-				with open('%s.xml' %(jID + '_' + 'SR'),'r') as file:
-					file = BeautifulSoup(file,features='lxml')
-					try:
-						prearchiving = file.publisher.prearchiving.string
-					except:
-						prearchiving = ''
-					try:
-						postarchiving = file.publisher.postarchiving.string
-					except:
-						postarchiving = ''
-					try:
-						prerestriction = file.publisher.prerestriction.string
-					except:
-						prerestriction = ''
-					try:
-						postrestriction = file.publisher.postrestriction.string
-						if '<num>' in postrestriction:
-							postrestriction = re.sub('<.*?>','',postrestriction)
-						else:
-							postrestriction = postrestriction.string
-					except:
-						postrestriction = ''
-					try:
-						pdfversion = file.publisher.pdfversion.string
-					except:
-						pdfversion = ''
-					try:
-						conditions = file.find_all("condition")
-						conditions = str(conditions)
-						conditions = re.sub('\[','',conditions)
-						conditions = re.sub('\]','',conditions)
-						conditions = re.sub('<.*?>','',conditions)
-						conditions = re.sub('&lt;num&gt;','',conditions)
-						conditions = re.sub('&lt;/num&gt;','',conditions)
-						conditions = re.sub('&lt;period units="month"&gt;','',conditions)
-						conditions = re.sub('&lt;/period&gt;','',conditions)
-						conditions = re.sub("(?<=rs)\W{2}","'",conditions)
-						conditions = re.sub("\W{2}(?=s)","'",conditions)
-					except:
-						conditions = ''
-			else:
-				prearchiving = ''
-				prerestriction = ''
-				postrestriction = ''
-				postarchiving = ''
-				pdfversion = ''
-				conditions = ''
-
-
-			if eissn != '':
-				qstring3 = firstPart2 + eissn + lastPart2
-				response = urllib.request.urlopen(qstring3,data=None,timeout=15)
-				webContent = response.read()
-				# with open('%s.xml' %(jID + '_' + 'SRE'),'w') as f3:
-				# 	f3.write(str(webContent))
-				# 	f3.close()
-				# file = BeautifulSoup(open('%s.xml' %(jID + '_' + 'SRE'), 'r'))
-				try:
-					f3 = open('%s.xml' %(jID + '_' + 'SRE'),'w')
-					f3.write(str(webContent))
-					f3.close()
-				except UnicodeEncodeError:
-					pass
-				try:
-					eprearchiving = file.publisher.prearchiving.string
-				except:
+				else:
 					eprearchiving = ''
-				try:
-					epostarchiving = file.publisher.postarchiving.string
-				except:
-					epostarchiving = ''
-				try:
-					eprerestriction = file.publisher.prerestriction.string
-				except:
 					eprerestriction = ''
-				try:
-					epostrestriction = file.publisher.postrestriction.string
-					if '<num>' in epostrestriction:
-						epostrestriction = re.sub('<.*?>','',postrestriction)
-					else:
-						epostrestriction = postrestriction.string
-				except:
 					epostrestriction = ''
-				try:
-					epdfversion = file.publisher.pdfversion.string
-				except:
+					epostarchiving = ''
 					epdfversion = ''
-				try:
-					econditions = file.find_all("condition")
-					econditions = str(econditions)
-					econditions = re.sub('\[','',econditions)
-					econditions = re.sub('\]','',econditions)
-					econditions = re.sub('<.*?>','',econditions)
-					econditions = re.sub('&lt;num&gt;','',econditions)
-					econditions = re.sub('&lt;/num&gt;','',econditions)
-					econditions = re.sub('&lt;period units="month"&gt;','',econditions)
-					econditions = re.sub('&lt;/period&gt;','',econditions)
-					econditions = re.sub("(?<=rs)\W{2}","'",econditions)
-					econditions = re.sub("\W{2}(?=s)","'",econditions)
-				except:
 					econditions = ''
+				writer.writerow({'pubID':jID,'issn':issn,'eissn':eissn,'prearchiving':prearchiving,'postarchiving':postarchiving,'prerestriction':prerestriction,'postrestriction':postrestriction,'pdfversion':pdfversion,'conditions':conditions,'eprearchiving':eprearchiving,'epostarchiving':epostarchiving,'eprerestriction':eprerestriction,'epostrestriction':epostrestriction,'epdfversion':epdfversion,'econditions':econditions})
+				totalTitles = totalTitles + 1
 
-			else:
-				eprearchiving = ''
-				eprerestriction = ''
-				epostrestriction = ''
-				epostarchiving = ''
-				epdfversion = ''
-				econditions = ''
-			writer.writerow({'pubID':jID,'issn':issn,'eissn':eissn,'prearchiving':prearchiving,'postarchiving':postarchiving,'prerestriction':prerestriction,'postrestriction':postrestriction,'pdfversion':pdfversion,'conditions':conditions,'eprearchiving':eprearchiving,'epostarchiving':epostarchiving,'eprerestriction':eprerestriction,'epostrestriction':epostrestriction,'epdfversion':epdfversion,'econditions':econditions})
-			totalTitles = totalTitles + 1
+			##iterates over the failedQueries.csv to query Sherpa Romeo for publication rights and issn; without issns from Journal TOCs, this uses the SherpaRomeo journal title search
+			for row in retry_reader:
+				jID = row['pubID']
+				title = row['title']
+				title = title.replace(' ','%20')
+				qstring2 = firstPart2 + title + lastPart2
+				
+				response = urllib.request.urlopen(qstring2)
+				webContent = response.read()
+				with open('%s.xml' %(jID + '_' + 'SRISSN'), 'w') as f3:
+					f3.write(str(webContent))
+					f3.close()
 
-		##iterates over the failedQueries.csv to query Sherpa Romeo for publication rights and issn; without issns from Journal TOCs, this uses the SherpaRomeo journal title search
-		for row in retry_reader:
-			jID = row['pubID']
-			title = row['title']
-			title = title.replace(' ','%20')
-			qstring2 = firstPart2 + title + lastPart2
-			
-			response = urllib.request.urlopen(qstring2)
-			webContent = response.read()
-			with open('%s.xml' %(jID + '_' + 'SRISSN'), 'w') as f3:
-				f3.write(str(webContent))
-				f3.close()
+				with open('%s.xml' %(jID + '_' + 'SRISSN'),'r') as file:
+					file = BeautifulSoup(file,features='lxml')
+					resultsCheck = file.numhits.string
+					resultsCheck = int(resultsCheck)
 
-			with open('%s.xml' %(jID + '_' + 'SRISSN'),'r') as file:
-				file = BeautifulSoup(file,features='lxml')
-				resultsCheck = file.numhits.string
-				resultsCheck = int(resultsCheck)
+					if resultsCheck == 0:
+						ultimateFail_writer.writerow({'pubID':jID,'title':title})
+						ultimateFail_count = ultimateFail_count + 1
+						pass
 
-				if resultsCheck == 0:
-					ultimateFail_writer.writerow({'pubID':jID,'title':title})
-					ultimateFail_count = ultimateFail_count + 1
-					pass
+					elif resultsCheck == 1:
+						title = title.replace('%20',' ')
+						try:
+							issn = file.journal.issn
+							issn = string(issn)
+						except:
+							issn = ''
+						try:
+							prearchiving = file.publisher.prearchiving.string
+						except:
+							prearchiving = ''
+						try:
+							postarchiving = file.publisher.postarchiving.string
+						except:
+							postarchiving = ''
+						try:
+							prerestriction = file.publisher.prerestriction.string
+						except:
+							prerestriction = ''
+						try:
+							postrestriction = file.publisher.postrestriction.string
+							if '<num>' in postrestriction:
+								postrestriction = re.sub('<.*?>','',postrestriction)
+							else:
+								postrestriction = postrestriction.string
+						except:
+							postrestriction = ''
+						try:
+							pdfversion = file.publisher.pdfversion.string
+						except:
+							pdfversion = ''
+						try:
+							conditions = file.find_all("condition")
+							conditions = str(conditions)
+							conditions = re.sub('\[','',conditions)
+							conditions = re.sub('\]','',conditions)
+							conditions = re.sub('<.*?>','',conditions)
+							conditions = re.sub('&lt;num&gt;','',conditions)
+							conditions = re.sub('&lt;/num&gt;','',conditions)
+							conditions = re.sub('&lt;period units="month"&gt;','',conditions)
+							conditions = re.sub('&lt;/period&gt;','',conditions)
+							conditions = re.sub("(?<=rs)\W{2}","'",conditions)
+							conditions = re.sub("\W{2}(?=s)","'",conditions)
+						except:
+							conditions = ''
 
-				elif resultsCheck == 1:
-					title = title.replace('%20',' ')
-					try:
-						issn = file.journal.issn
-						issn = string(issn)
-					except:
-						issn = ''
-					try:
-						prearchiving = file.publisher.prearchiving.string
-					except:
-						prearchiving = ''
-					try:
-						postarchiving = file.publisher.postarchiving.string
-					except:
-						postarchiving = ''
-					try:
-						prerestriction = file.publisher.prerestriction.string
-					except:
-						prerestriction = ''
-					try:
-						postrestriction = file.publisher.postrestriction.string
-						if '<num>' in postrestriction:
-							postrestriction = re.sub('<.*?>','',postrestriction)
-						else:
-							postrestriction = postrestriction.string
-					except:
-						postrestriction = ''
-					try:
-						pdfversion = file.publisher.pdfversion.string
-					except:
-						pdfversion = ''
-					try:
-						conditions = file.find_all("condition")
-						conditions = str(conditions)
-						conditions = re.sub('\[','',conditions)
-						conditions = re.sub('\]','',conditions)
-						conditions = re.sub('<.*?>','',conditions)
-						conditions = re.sub('&lt;num&gt;','',conditions)
-						conditions = re.sub('&lt;/num&gt;','',conditions)
-						conditions = re.sub('&lt;period units="month"&gt;','',conditions)
-						conditions = re.sub('&lt;/period&gt;','',conditions)
-						conditions = re.sub("(?<=rs)\W{2}","'",conditions)
-						conditions = re.sub("\W{2}(?=s)","'",conditions)
-					except:
-						conditions = ''
-
-			writer.writerow({'pubID':jID,'issn':issn,'prearchiving':prearchiving,'postarchiving':postarchiving,'prerestriction':prerestriction,'postrestriction':postrestriction,'pdfversion':pdfversion,'conditions':conditions,'eprearchiving':eprearchiving,'epostarchiving':epostarchiving,'eprerestriction':eprerestriction,'epostrestriction':epostrestriction,'epdfversion':epdfversion,'econditions':econditions})
-			totalTitles = totalTitles + 1
+				writer.writerow({'pubID':jID,'issn':issn,'prearchiving':prearchiving,'postarchiving':postarchiving,'prerestriction':prerestriction,'postrestriction':postrestriction,'pdfversion':pdfversion,'conditions':conditions,'eprearchiving':eprearchiving,'epostarchiving':epostarchiving,'eprerestriction':eprerestriction,'epostrestriction':epostrestriction,'epdfversion':epdfversion,'econditions':econditions})
+				totalTitles = totalTitles + 1
 	totalTitles = totalTitles - ultimateFail_count
 	disambiguatedTitles.close()
 	failedQueries.close()
