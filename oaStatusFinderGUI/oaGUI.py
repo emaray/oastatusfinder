@@ -1,5 +1,5 @@
-from tkinter import *
-from tkinter import messagebox
+from tkinter2 import *
+from tkinter2 import messagebox
 import threading
 
 window = Tk() 
@@ -24,8 +24,9 @@ part2Label = Label(window, text='Part 2: Querying SherpaRomeo ',font = "Verdana 
 part3Label = Label(window, text='Part 3: Creating lists for consulting librarians',font = "Verdana 12 italic", bg="white")
 
 
-lflbl1 = Label(window, text="Enter the name of the faculty publications file.\n (Don't include the file extension.)")
+lflbl1 = Label(window, text="Enter the name of the faculty publications file.\n (Don't include the file extension.)", bg="white")
 lftxt1 = Entry(window,width=50,highlightcolor="orange",highlightthickness=1,relief="flat")
+lflbl2 = Label(window, text ="The publications list is formatted. \n\n See 'publicationsCleaned.csv' or click 'Return to menu' and proceed with Part 1.", bg="white")
 
 jTOCslbl1 = Label(window, text="Enter your JournalTOCs username: \n", bg="white")
 jTOCstxt1 = Entry(window,width=50,highlightcolor="orange",highlightthickness=1,relief="flat") 
@@ -180,6 +181,7 @@ def returnMenuLF():
 	lfLabel.grid_remove()
 	lflbl1.grid_remove()
 	lftxt1.grid_remove()
+	lflbl2.grid_remove()
 	blank1.grid_remove()
 	blank2.grid_remove()
 	blank3.grid_remove()
@@ -294,8 +296,10 @@ def getInputsLF():
 	def listFormatterThread():
 		publicationsList = lftxt1.get()
 		lf.listFormatter(publicationsList)
+		lflbl1.grid_remove()
+		lftxt1.grid_remove()
+		lflbl2.grid(column=0,row=5,columnspan=3)
 		submitButtonLF.grid_remove()
-		# returnButton = Button(window, text="Return to menu", command=returnMenu)
 		returnButtonLF.grid(column=0, row=10,columnspan=3)
 	t = threading.Thread(target=listFormatterThread)
 	t.start()	
@@ -463,7 +467,7 @@ blank3.grid(column=0, row=11)
 
 def getInputs3(event=None):
 	import assignLibrarianGUI as al
-	def getInputs3Threaded():
+	def getInputs3Thread():
 		folderName = altxt1.get()
 		haveList = altxt2.get()
 		al.consultingAreasList(folderName, haveList,window)
@@ -473,6 +477,7 @@ def getInputs3(event=None):
 	
 	t = threading.Thread(target=getInputs3Thread)
 	t.start()
+	
 
 
 
