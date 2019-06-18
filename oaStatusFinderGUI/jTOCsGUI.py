@@ -7,7 +7,8 @@ from bs4 import BeautifulSoup
 import lxml
 import csv
 import os
-
+from tkinter import messagebox
+from tkinter import simpledialog
 
 
 print()
@@ -99,6 +100,7 @@ def createQuery(jtocsUser,folderName,publicationFile):
                 editedTitle = editedTitle.replace(' ','+').replace('-','+').replace('++','+').replace('\n','\r')
                 editedList.append(editedTitle)
 
+
         ##CREATE QUERY STRINGS
                 firstPart = 'http://www.journaltocs.ac.uk/api/journals/'
                 lastPart = '?encoding=utf-8-sig&user=%s' %(jtocsUser)
@@ -163,7 +165,12 @@ def runQuery1(totalQueries,folderName):
                     errorCount = errorCount + 1                 
                 pass
             except ValueError:
-                pass             
+                pass
+                
+            # if int(pubID) == totalQueries/2:
+            #     messagebox.showinfo("Update","%s queries sent. We're half-way there!" %(pubID))
+            # else:
+            #     pass             
             sleep(.0625)
         
     ##allows script to skip requests that time out instead of failing; prints url and the error message to screen

@@ -6,8 +6,9 @@ import lxml
 import csv
 import os
 import pandas
-from tkinter import messagebox
-from tkinter import simpledialog
+from tkinter2 import messagebox
+from tkinter2 import simpledialog
+import threading
 
 print()
 print()
@@ -40,7 +41,7 @@ print()
 def consultingAreasList(folderName,haveList,window):
 	# folderName = input('Enter the project folder name:')
 	cwd = os.getcwd()
-	path = '%s' %(cwd)
+	path = '%s' %(folderName)
 	os.chdir(path)
 	
 	# haveList = input("Do you already have a .csv file of consulting areas by librarian? Answer 'yes' or 'no':")
@@ -69,29 +70,30 @@ def consultingAreasList(folderName,haveList,window):
 			for row in oaStatusReader:
 				department = row['department']
 				if department not in departmentList:
+					departmentList.append(department)
 					part1 = "Enter initials for the consulting librarian to"
 					part2 = department
 					initialsInput = part1+' '+part2+':'
-					librarianInitials =  simpledialog.askstring("Part 3: Assigning librarians",initialsInput)
-					departmentList.append(department)
+					librarianInitials =  simpledialog.askstring("Part 3: Assigning librarians",initialsInput,parent=window)
 					consultingAreasWriter.writerow({'department':department,'librarianInitials':librarianInitials})
-					caList = 'consultingAreas'
+
 				else:
 					pass
+		caList = 'consultingAreas'
 		consultingAreas.close()
 
 	else:
-		caList = simpledialog.askstring("Part 3: Assigning librarians","Great! We'll use that. Make sure the list is in the project folder. \n\nEnter the name of the list file:") 
-	makeMaster(caList)
+		caList = simpledialog.askstring("Part 3: Assigning librarians","Great! We'll use that. Make sure the list is in the project folder. \n\nEnter the name of the list file:",parent=window) 
+	makeMaster(caList,window)
 
-def makeMaster(caList):
+def makeMaster(caList,window):
 	csv1 =pandas.read_csv('oaStatus.csv')
 	csv2 = pandas.read_csv('%s.csv' %(caList))
 
 	merged = csv1.merge(csv2,left_on='department',right_on='department',how='inner')
 	merged.to_csv('oaMaster.csv',index=False)
 
-	separateLists = messagebox.askyesno("Part 3: Separate lists", "Would you like a list separated by consulting librarian? Answer 'yes' or 'no':")
+	separateLists = messagebox.askyesno("Part 3: Separate lists", "Would you like a list separated by consulting librarian? Answer 'yes' or 'no':",parent=window)
 	# separateLists_negative = ['no','n','NO','No','N','nope','Nope','NOPE','not a one']
 	# if separateLists not in separateLists_negative:
 	if separateLists == True:
@@ -144,9 +146,9 @@ def makeMaster(caList):
 					##WRITES PUBLICATIONS TO FILES BY LIBRARIAN						
 					else:
 						librarianPublicationList_writer.writerow({'pubID':pubID,'firstName':firstName,'lastName':lastName,'department':department,'category':category,'activityScope':activityScope,'journalTitle':journalTitle,'month':month,'issueNumber':issueNumber,'pages':pages,'articleTitle':articleTitle,'volume':volume,'year':year,'issn':issn,'eissn':eissn,'prearchiving':prearchiving,'postarchiving':postarchiving,'prerestriction':prerestriction,'postrestriction':postrestriction,'pdfversion':pdfversion,'conditions':conditions,'eprearchiving':eprearchiving,'epostarchiving':epostarchiving,'eprerestriction':eprerestriction,'epostrestriction':epostrestriction,'epdfversion':epdfversion,'econditions':econditions})					
-		messagebox.showinfo("Part 3: Lists made!","The project folder now contains one master list and lists separated by librarian.")
+		messagebox.showinfo("Part 3: Lists made!","The project folder now contains one master list and lists separated by librarian.",parent=window)
 	else:
-		messagebox.showinfo("Part 3: List made!","Okay! masterOA.csv has all the information you need.")
+		messagebox.showinfo("Part 3: List made!","Okay! masterOA.csv has all the information you need.",parent=window)
 		pass
 
 
