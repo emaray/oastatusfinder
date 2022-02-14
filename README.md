@@ -1,4 +1,5 @@
 # oastatusfinder
+This program requires the following:
 
 ## Dependencies
 ### OA Status Finder (scripts only)
