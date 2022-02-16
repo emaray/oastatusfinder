@@ -1,6 +1,6 @@
 # oastatusfinder
 ## Dependencies
-### OA Status Finder (scripts only)
+### OA Status Finder (no GUI, scripts only)
 1. beautifulsoup4
 2. lxml 
 3. unidecode
